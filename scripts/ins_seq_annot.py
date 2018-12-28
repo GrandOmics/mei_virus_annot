@@ -7,19 +7,7 @@ import os
 import argparse
 
 
-def run_get_ins_seq(prog, vcf, bam, output):
-    out_fp = open(output, "w")
-    subprocess.run([prog, vcf, bam], stdout=out_fp)
-    out_fp.close()
-
-
-def run_blast(prog, query, db, nthread, output):
-    out_fp = open(output, "w")
-    outfmt = ("6 qaccver saccver qlen slen qstart qend sstart send sstrand "
-        "pident length mismatch gapopen evalue bitscore")
-    subprocess.run([prog, "-query", query, "-db", db, "-outfmt", outfmt,
-        "-num_threads", nthread], stdout=out_fp)
-    out_fp.close()
+import sv_vcf
 
 
 class hsp(object):
@@ -164,6 +152,40 @@ def get_best_hit(_hit_iter):
             _best_hit = hit
     return _best_hit
 
+
+def run_get_ins_seq(vcf, output):
+    out_fp = open(output, "w")
+    with open(vcf, "r") as io:
+        for line in io:
+            line = line.strip()
+            if line[0] == "#":
+                continue
+            sv_record = sv_vcf.sv_vcf_record(line)
+            if sv_record.svtype == "INS":
+                ins_id = sv_record.id
+                for i in sv_record.alt:
+                    if i not in ["A","T","C","G","N"]:
+                        raise RuntimeError("[run_get_ins_seq] Error: "
+                            "Invalic Insert sequence {}".format(sv_record.alt))
+                    else:
+                        ins_seq = sv_record.alt
+                print(">{}\n{}".format(ins_id, ins_seq), file=out_fp)
+    out_fp.close()
+
+
+def run_blast(prog, query, db, nthread, output):
+    out_fp = open(output, "w")
+    outfmt = ("6 qaccver saccver qlen slen qstart qend sstart send sstrand "
+        "pident length mismatch gapopen evalue bitscore")
+    runner = subprocess.Popen([prog, "-query", query, "-db", db, "-outfmt",
+        outfmt, "-num_threads", nthread], stdout=out_fp)
+    runner.wait()
+    if runner.returncode != 0:
+        raise RuntimeError("[run_blast] Error: "
+            "blast return code was not equal 0")
+    out_fp.close()
+
+
 def run_ins_annot(blast_report, outfile):
     reader = report_reader(blast_report)
     with open(outfile, "w") as io:
@@ -181,13 +203,12 @@ def run_ins_annot(blast_report, outfile):
             line = "\t".join([str(i) for i in fields])
             print(line, file = io)
 
+
 def get_args():
     parser = argparse.ArgumentParser(description="Insertion sequence annotation"
         " for sniffles vcf", usage="%(prog)s [options]")
     parser.add_argument("--vcf", help="sniffles vcf file"
         " [default: %(default)s]", metavar="FILE")
-    parser.add_argument("--bam", help="bam file which must match "
-        "with sniffles vcf file [default: %(default)s]", metavar="FILE")
     parser.add_argument("--prefix", help="Output file prefix"
         " [default: %(default)s]", metavar="STR")
 
@@ -199,13 +220,9 @@ def get_args():
             
 def main():
     args = get_args()
-
-    sv_ins_seq_prog = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-        "../build/bin/sv_ins_seq")
     
     ins_seq_fasta = args.prefix+".ins.fasta"
-    run_get_ins_seq(sv_ins_seq_prog, args.vcf, args.bam,
-        ins_seq_fasta)
+    run_get_ins_seq(args.vcf, ins_seq_fasta)
     
     blast_db = os.path.join(os.path.dirname(os.path.abspath(__file__)),
         "../database/Homo_sapiens.mei_virus.db.fasta")
