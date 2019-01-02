@@ -17,7 +17,7 @@ blastn should be in the `PATH`
 ## Installation
 
 ```shell
-git clone --recursive git@gitlab.com:archieyoung/sv_ins_seq.git
+git clone --recursive git@gitlab.com:archieyoung/mei_virus_annot.git
 cd sv_ins_seq
 mkdir build
 cd build
