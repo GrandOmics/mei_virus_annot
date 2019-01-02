@@ -1,5 +1,4 @@
 build
 database/rmsk.*
 test
-src
 scripts/__pycache__/
