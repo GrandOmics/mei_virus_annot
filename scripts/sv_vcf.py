@@ -93,10 +93,10 @@ class sv_vcf_record(object):
 
         # svlen
         try:
-            self.svlen = self.info_dict["SVLEN"]
+            self.svlen = abs(int(self.info_dict["SVLEN"]))
         except KeyError:
             # INS, TRA do not have SVLEN attribute
-            self.svlen = "NA"
+            self.svlen = 0
 
         # RE(number of read evidence)
         if "RE" in self.info_dict: # sniffles and picky

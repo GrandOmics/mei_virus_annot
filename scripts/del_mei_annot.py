@@ -3,10 +3,9 @@ Mobile Element Insertion Annotation for DELs.
 50% overlap reciprocally
 """
 import sys
-from collections import Counter
 
 import sv_vcf
-from intervaltree import Interval, IntervalTree
+import bin_index
 
 def format_rmsk(rmsk_file, rmsk_out):
     out = open(rmsk_out, "w")
@@ -23,7 +22,7 @@ def format_rmsk(rmsk_file, rmsk_out):
 
 class rmsk(object):
     def __init__(self, record):
-        """rmsk_id bin, swScore, milliDiv, milliDel, milliIns, genoName,
+        """rmsk_id, bin, swScore, milliDiv, milliDel, milliIns, genoName,
         genoStart, genoEnd, genoLeft, strand, repName, repClass, repFamily,
         repStart, repEnd, repLeft, id"""
         self.fields = record.strip().split("\t")
@@ -52,29 +51,55 @@ class rmsk_db(object):
             io.readline() # remove header
             for line in io:
                 rmsk_record = rmsk(line)
+                _interval = bin_index.interval(rmsk_record.start,
+                    rmsk_record.end, rmsk_record.mei_type)
                 if rmsk_record.chr not in self.db:
-                    self.db[rmsk_record.chr] = IntervalTree()
-                    self.db[rmsk_record.chr].addi(rmsk_record.start,
-                        rmsk_record.end, rmsk_record)
+                    self.db[rmsk_record.chr] = bin_index.BinIndex()
+                    self.db[rmsk_record.chr].add_interval(_interval)
                 else:
-                    self.db[rmsk_record.chr].addi(rmsk_record.start,
-                        rmsk_record.end, rmsk_record)
+                    self.db[rmsk_record.chr].add_interval(_interval)
 
-    def search(self, chrom, start, end):
+    def search(self, chrom, query_interval):
         if chrom not in self.db:
             return 0
-        overlaps = self.db[chrom][start:end]
-        if overlaps != set(): # not a empty set
-            for _iterval in overlaps:
-                overlap = min([_iterval.end, end]) - max([_iterval.begin,
-                    start])
-                if overlap/(end - start) >= 0.5 and overlap/(_iterval.end -
-                    _iterval.begin) >= 0.5:
-                    return _iterval.data
-                else:
-                    return 0
+        overlaps = self.db[chrom].get_overlap(query_interval)
+        if overlaps:
+            for _interval in overlaps:
+                overlap = min(_interval.end, query_interval.end) - max(
+                    _interval.start, query_interval.start) + 1
+                if (overlap/query_interval.size >= 0.5 and
+                    overlap/_interval.size) >= 0.5:
+                    if _interval.data == "Alu":
+                        if (abs(query_interval.start - _interval.start) <= 20
+                            and abs(query_interval.end - _interval.end) <= 20):
+                            return _interval.data # first match
+                    elif _interval.data == "L1" or _interval.data == "SVA":
+                        if (abs(query_interval.start - _interval.start) <= 200
+                            and abs(query_interval.end - _interval.end) <= 200):
+                            return _interval.data # first match
+            return 0 # no match
         else:
             return 0
+
+class del_reader(object):
+    def __init__(self, vcf):
+        self.vcf = vcf
+    
+    def __iter__(self):
+        with open(self.vcf,"r") as io:
+            for line in io:
+                if line[0] == "#":
+                    continue
+                sv = sv_vcf.sv_vcf_record(line)
+                if (sv.svtype == "DEL" and sv.svlen != "NA" and
+                    abs(sv.svlen) > 100 and abs(sv.svlen) < 11000):
+                    if "chr" not in sv.chrom1:
+                        sv.chrom1 = "chr" + sv.chrom1
+                    if int(sv.pos1) > int(sv.pos2):
+                        raise RuntimeError("pos1 > pos2 for DEL {}".format(
+                            sv.id))
+                    yield sv.chrom1, bin_index.interval(int(sv.pos1),
+                        int(sv.pos2), sv.id)       
 
 def main():
     if len(sys.argv) < 4:
@@ -85,34 +110,11 @@ def main():
     _rmsk_db.loadDB(sys.argv[2])
 
     out = open(sys.argv[3],"w")
-
-    summary = []
-
-    with open(sys.argv[1],"r") as io:
-        for line in io:
-            if line[0] == "#":
-                continue
-            sv = sv_vcf.sv_vcf_record(line)
-            if (sv.svtype == "DEL" and sv.svlen != "NA" and int(sv.svlen) > 100
-                and int(sv.svlen) < 11000):
-                if "chr" not in sv.chrom1:
-                    sv.chrom1 = "chr" + sv.chrom1
-                if int(sv.pos1) > int(sv.pos2):
-                    raise RuntimeError("pos1 > pos2 for DEL {}".format(sv.id))
-                target = _rmsk_db.search(sv.chrom1, int(sv.pos1), int(sv.pos2))
-                if target != 0:
-                    summary.append(target)
-                    print("{}\t{}\t{}\t{}".format(sv.id,
-                        sv.svtype, target.mei_type, target.id), file=out)
-    out.close()
-
-    out = open(sys.argv[3]+".summary","w")
-    _c = Counter(summary)
-    for i in _c:
-        print("{}\t{}".format(i,_c[i]),file=out)
+    for chrom, q_interval in del_reader(sys.argv[1]):
+        result = _rmsk_db.search(chrom, q_interval)
+        if result:
+            print("{}\t{}".format(q_interval.data, result), file=out)
     out.close()
 
 if __name__ == "__main__":
     main()
-
-

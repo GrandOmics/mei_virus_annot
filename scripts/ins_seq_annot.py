@@ -153,7 +153,12 @@ def get_best_hit(_hit_iter):
     return _best_hit
 
 
-def run_get_ins_seq(vcf, output):
+def run_get_ins_seq_bam(prog, vcf, bam, output):
+    out_fp = open(output, "w")
+    subprocess.run([prog, vcf, bam], stdout=out_fp)
+    out_fp.close()
+
+def run_get_ins_seq_vcf(vcf, output):
     out_fp = open(output, "w")
     with open(vcf, "r") as io:
         for line in io:
@@ -203,11 +208,26 @@ def run_ins_annot(blast_report, outfile):
             line = "\t".join([str(i) for i in fields])
             print(line, file = io)
 
+def ins_annot_iter(blast_report):
+    reader = report_reader(blast_report)
+    for report in reader:
+        _best_hit = get_best_hit(hit_iter(report))
+        if "." in _best_hit.saccver:
+            target_type = _best_hit.saccver.split(".")[0]
+        else:
+            target_type = _best_hit.saccver
+        fields = [_best_hit.qaccver, _best_hit.saccver, target_type,
+            _best_hit.qlen, _best_hit.slen, _best_hit.query_cov,
+            _best_hit.subject_cov, _best_hit.mean_pident]
+        yield fields
+
 
 def get_args():
     parser = argparse.ArgumentParser(description="Insertion sequence annotation"
         " for sniffles vcf", usage="%(prog)s [options]")
     parser.add_argument("--vcf", help="sniffles vcf file"
+        " [default: %(default)s]", metavar="FILE")
+    parser.add_argument("--bam", help="bam file"
         " [default: %(default)s]", metavar="FILE")
     parser.add_argument("--prefix", help="Output file prefix"
         " [default: %(default)s]", metavar="STR")
@@ -221,8 +241,10 @@ def get_args():
 def main():
     args = get_args()
     
+    c_sv_ins_seq = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        "../build/bin/sv_ins_seq")
     ins_seq_fasta = args.prefix+".ins.fasta"
-    run_get_ins_seq(args.vcf, ins_seq_fasta)
+    run_get_ins_seq_bam(c_sv_ins_seq, args.vcf, args.bam, ins_seq_fasta)
     
     blast_db = os.path.join(os.path.dirname(os.path.abspath(__file__)),
         "../database/Homo_sapiens.mei_virus.db.fasta")

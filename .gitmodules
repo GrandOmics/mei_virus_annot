@@ -1,0 +1,6 @@
+[submodule "vendor/spoa"]
+	path = vendor/spoa
+	url = git@github.com:rvaser/spoa.git
+[submodule "vendor/htslib"]
+	path = vendor/htslib
+	url = git@github.com:samtools/htslib.git

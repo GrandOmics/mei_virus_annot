@@ -1,14 +1,14 @@
-# Insertion Sequence Annotation Tool for Sniffles
+# MEI and Virus genome Sequence Annotation Tool for Structure Variation
 
-A simple insertion sequence annotation tool for sniffles SV result. Provide mobile element (Alu, Line, SVA) annotation and virus genome sequence (HBV, PV) annotation.
-
-**Sniffles provide INS sequence since version v1.0.10. No need to retrive INS sequence through `sv_ins_seq`.**
+ Provide mobile element (Alu, Line, SVA) annotation and virus genome sequence (HBV, PV) annotation.
 
 ## Dependencies
 
 **Linux**
 
-~~gcc 4.8+ cmake 3.2+~~
+gcc 4.8+
+
+cmake 3.2+
 
 python3
 
@@ -16,21 +16,28 @@ blastn should be in the `PATH`
 
 ## Installation
 
-~~shell
+```shell
 git clone --recursive git@gitlab.com:archieyoung/sv_ins_seq.git
 cd sv_ins_seq
 mkdir build
 cd build
 cmake ..
-make~~
+make
+```
 
-
-~~A executable `sv_ins_seq` will appear in the build/bin, `sv_ins_seq` gets consensus insert sequnce from bam file.~~ `ins_seq_annot.py` in scripts is the end-user script.
+A executable `sv_ins_seq` will appear in the build/bin, `sv_ins_seq` gets consensus insert sequnce from bam file. `mei_virals.annot.py` in scripts is the end-user script.
 
 ## Work Flow
 
-~~1. Get consensus insert sequences from bam file for `INS` in sniffles vcf.~~
-1. Get consensus insert sequences from sniffles vcf.
+**DEL annot:**
+
+1. Read [rmsk.txt](http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz) into a BinIndex.
+
+2. For each SV in input vcf file, search it against the BinIndex, if reciprocal overlap >= 50% and the start and end coordinates both match within a window of 20 bp for Alus, or 200 bp for L1s and SVAs, report it and the MEI.
+
+**INS annot:**
+
+1. Get consensus insert sequences from bam file for `INS` in sniffles vcf.
 
 2. Blast consensus insert sequences against `Mobile element and virus genome` DB using default blastn parametes.
 
@@ -39,22 +46,20 @@ make~~
 ## Usage
 
 ```shell
-python3 ins_seq_annot.py 
-usage: ins_seq_annot.py [options]
+python3 scripts/mei_virals.annot.py 
+usage: mei_virals.annot.py [options]
 
 Insertion sequence annotation for sniffles vcf
 
 optional arguments:
-  -h, --help    show this help message and exit
-  --vcf FILE    sniffles vcf file [default: None]
-  --bam FILE    bam file which must match with sniffles vcf file [default:
-                None]
-  --prefix STR  Output file prefix [default: None]
+  -h, --help            show this help message and exit
+  -v FILE, --vcf FILE   sniffles vcf file [default: None]
+  -b FILE, --bam FILE   bam file [default: None]
+  -o STR, --outfile STR
+                        Output file prefix [default: None]
 ```
 
-Output files: prefix.ins.annot.txt is the annotation result.
-prefix.ins.fasta is the consensus insert sequences.
-prefix.ins.blast.txt is the blast report for the consensus insert sequences.
+Output files: outfile is the annotation result. outfile.summary is the summary of the annotation result.
 
 
 ## Blast Database
