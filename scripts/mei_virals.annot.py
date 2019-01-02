@@ -78,11 +78,11 @@ def reporter(vcf, del_annot_dict, ins_annot_dict, outfile):
     del_counter = Counter(del_annot_dict.values())
     ins_counter = Counter(ins_annot_dict.values())
     print("#DEL annot summay: \n#sv_type\tannot_type\tnumber", file = out_fp)
-    for i in del_counter:
+    for i in sorted(del_counter):
         print("DEL\t{}\t{}".format(i, del_counter[i]), file = out_fp)
     print("DEL\ttotal\t{}".format(del_num_total), file = out_fp)
     print("#INS annot summay: \n#sv_type\tannot_type\tnumber", file = out_fp)
-    for i in ins_counter:
+    for i in sorted(ins_counter):
         print("INS\t{}\t{}".format(i, ins_counter[i]), file = out_fp)
     print("INS\ttotal\t{}".format(ins_num_total), file = out_fp)
     out_fp.close()
