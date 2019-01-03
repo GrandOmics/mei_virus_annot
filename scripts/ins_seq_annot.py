@@ -216,10 +216,13 @@ def ins_annot_iter(blast_report):
             target_type = _best_hit.saccver.split(".")[0]
         else:
             target_type = _best_hit.saccver
+        if target_type == "ALU":
+            target_type = "Alu"
         fields = [_best_hit.qaccver, _best_hit.saccver, target_type,
             _best_hit.qlen, _best_hit.slen, _best_hit.query_cov,
             _best_hit.subject_cov, _best_hit.mean_pident]
-        yield fields
+        if _best_hit.query_cov >= 0.5 and _best_hit.subject_cov >= 0.5:
+            yield fields
 
 
 def get_args():
