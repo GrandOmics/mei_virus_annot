@@ -43,6 +43,8 @@ A executable `sv_ins_seq` will appear in the build/bin, `sv_ins_seq` gets consen
 
 3. Get the best blast hit by choosing the hit which make coverage on query and coverage on target maximum.
 
+4. Filter best blast hit, if coverage on both query and target >= 50% keep it. 
+
 ## Usage
 
 ```shell
