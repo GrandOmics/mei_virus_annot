@@ -18,7 +18,7 @@ blastn should be in the `PATH`
 
 ```shell
 git clone --recursive git@gitlab.com:archieyoung/mei_virus_annot.git
-cd sv_ins_seq
+cd mei_virus_annot
 mkdir build
 cd build
 cmake ..
@@ -73,14 +73,12 @@ Blast database is named `Home_sapiens.mei_virus.db.fasta` and is in database dir
 ## Future Plans
 
 1. Retrive insert sequences from split mapping reads.
+2. Gene ins
 
 ## Reference
 
 Stewart C, Kural D, Strömberg MP, Walker JA, Konkel MK, et al. (2011) A Comprehensive Map of Mobile Element Insertion Polymorphisms in Humans. PLOS Genetics 7(8): e1002236. https://doi.org/10.1371/journal.pgen.1002236
 
 Nam-phuong D Nguyen, Viraj Deshpande, Jens Luebeck, Paul S Mischel, Vineet Bafna; ViFi: accurate detection of viral integration and mRNA fusion reveals indiscriminate and unregulated transcription in proximal genomic regions in cervical cancer, Nucleic Acids Research, Volume 46, Issue 7, 20 April 2018, Pages 3309–3325, https://doi.org/10.1093/nar/gky180
-
-
-
 
 
