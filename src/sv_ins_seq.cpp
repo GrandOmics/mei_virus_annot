@@ -23,6 +23,7 @@ int main(int argc, char const *argv[]) {
 
     while (vcf_read1(fp_v, h_v, v) >= 0) {
         // const char *chrom1 = bcf_hdr_id2name(h_v, v->rid);
+        fprintf(stderr, "%d\n", v->d.id);
         int n1 = 0;
         char *svtype = NULL;
         int ret1 = bcf_get_info_string(h_v,v,"SVTYPE",&svtype,&n1);
