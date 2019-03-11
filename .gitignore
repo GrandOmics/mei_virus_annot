@@ -1,4 +1,5 @@
-build
+build*
 database/rmsk.*
 test
 scripts/__pycache__/
+.vscode

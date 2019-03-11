@@ -67,8 +67,8 @@ class rmsk_db(object):
             for _interval in overlaps:
                 overlap = min(_interval.end, query_interval.end) - max(
                     _interval.start, query_interval.start) + 1
-                if (overlap/query_interval.size >= 0.5 and
-                    overlap/_interval.size) >= 0.5:
+                if overlap/query_interval.size >= 0.5 and
+                    overlap/_interval.size >= 0.5:
                     if _interval.data == "Alu":
                         if (abs(query_interval.start - _interval.start) <= 20
                             and abs(query_interval.end - _interval.end) <= 20):
