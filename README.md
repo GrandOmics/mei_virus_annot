@@ -51,7 +51,7 @@ A executable `sv_ins_seq` will appear in the build/bin, `sv_ins_seq` gets consen
 python3 scripts/mei_virals.annot.py 
 usage: mei_virals.annot.py [options]
 
-Insertion sequence annotation for sniffles vcf
+MEI and virals annotation for sniffles vcf
 
 optional arguments:
   -h, --help            show this help message and exit
